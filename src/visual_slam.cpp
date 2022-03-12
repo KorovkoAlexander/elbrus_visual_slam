@@ -1,5 +1,7 @@
 #include "visual_slam.h"
 
+#include <pybind11/embed.h>
+
 namespace {
 ELBRUS_Pose to_elbrus(const Pose& pose) {
     ELBRUS_Pose e_pose;
@@ -101,10 +103,8 @@ PoseEstimate from_elbrus(const ELBRUS_PoseEstimate& e_estimate) {
 
 ELBRUS_ImuMeasurement to_elbrus(const ImuMeasurement& imu) {
     ELBRUS_ImuMeasurement e_imu;
-    py::buffer_info lin_info = imu.linear_accelerations.request();
-    py::buffer_info ang_info = imu.angular_velocities.request();
-    std::memcpy(e_imu.linear_accelerations, lin_info.ptr, 3 * sizeof(float));
-    std::memcpy(e_imu.angular_velocities, ang_info.ptr, 3 * sizeof(float));
+    std::memcpy(e_imu.linear_accelerations, imu.linear_accelerations.data(), 3 * sizeof(float));
+    std::memcpy(e_imu.angular_velocities, imu.angular_velocities.data(), 3 * sizeof(float));
     return e_imu;
 }
 
@@ -456,18 +456,6 @@ PYBIND11_MODULE(elbrus_visual_slam, m){
         .value("SBA_ON_CPU",SBA_ON_CPU)
         .value("SBA_OFF",SBA_OFF)
         .export_values();
-
-//    m.def("convertONNX", &convertONNX, "convert ONNX model into engine file",
-//          py::arg("modelFile"),
-//          py::arg("file_list") = "",
-//          py::arg("scale") = std::tuple<float, float, float>(58.395, 57.12 , 57.375),
-//          py::arg("shift") = std::tuple<float, float, float>(123.675, 116.28 , 103.53),
-//          py::arg("max_batch_size") = 1,
-//          py::arg("allowGPUFallback") = true,
-//          py::arg("device") = DEVICE_GPU,
-//          py::arg("precision") = TYPE_FP32,
-//          py::arg("format") = RGB,
-//          py::arg("logs_path") = "");
 
     py::class_<Pose>(m, "Pose")
         .def(py::init<>())

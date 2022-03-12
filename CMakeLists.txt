@@ -9,22 +9,26 @@ else()
     set(CMAKE_CXX_FLAGS "-O3")
 endif (UNIX)
 
-include_directories(${PROJECT_SOURCE_DIR}/elbrus/include)
-link_directories(${PROJECT_SOURCE_DIR}/elbrus/lib_x86_64)
-
 file(GLOB srcSources src/*.cpp)
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
-
 add_subdirectory(pybind11)
-#add_subdirectory(spdlog)
 
-add_library(elbrus_visual_slam MODULE ${srcSources})
+execute_process(
+        COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE ARCHITECTURE)
+message( STATUS "Architecture: ${ARCHITECTURE}" )
 
-target_link_libraries(elbrus_visual_slam
-        pybind11::module
-#        spdlog::spdlog
-        )
+# Elbrus
+include_directories(${PROJECT_SOURCE_DIR}/elbrus/include)
+add_library(elbrus SHARED IMPORTED)
+if( ${ARCHITECTURE} STREQUAL "x86_64" )
+    set_property(TARGET elbrus PROPERTY IMPORTED_LOCATION ${PROJECT_SOURCE_DIR}/elbrus/lib_x86_64/libelbrus.so)
+elseif( ${ARCHITECTURE} STREQUAL "aarch64" )
+    set_property(TARGET elbrus PROPERTY IMPORTED_LOCATION ${PROJECT_SOURCE_DIR}/elbrus/lib_aarch64_xavier/libelbrus.so)
+endif()
 
-set_target_properties(elbrus_visual_slam PROPERTIES PREFIX "${PYTHON_MODULE_PREFIX}"
-        SUFFIX "${PYTHON_MODULE_EXTENSION}")
+pybind11_add_module(elbrus_visual_slam MODULE ${srcSources})
+target_link_libraries(elbrus_visual_slam PRIVATE elbrus)
+
+set_target_properties(elbrus_visual_slam
+        PROPERTIES PREFIX "${PYTHON_MODULE_PREFIX}" SUFFIX "${PYTHON_MODULE_EXTENSION}")

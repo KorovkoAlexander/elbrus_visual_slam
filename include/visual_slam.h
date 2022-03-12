@@ -75,8 +75,8 @@ struct PoseEstimate
 
 struct ImuMeasurement
 {
-    py::array_t<float, py::array::c_style> linear_accelerations; // 3; in meters per squared second
-    py::array_t<float, py::array::c_style> angular_velocities;   // 3; in radians per second
+    std::vector<float> linear_accelerations; // 3; in meters per squared second
+    std::vector<float> angular_velocities;   // 3; in radians per second
 };
 
 struct Camera

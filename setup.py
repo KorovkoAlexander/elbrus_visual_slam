@@ -7,11 +7,19 @@ import subprocess
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 from distutils.version import LooseVersion
-
+from site import getsitepackages
 
 class CMakeExtension(Extension):
     def __init__(self, name, sourcedir=''):
-        Extension.__init__(self, name, sources=[])
+
+        so_dir = os.path.join(getsitepackages()[0], "elbrus")
+        so_path = os.path.join(so_dir, "libelbrus.so")
+
+        Extension.__init__(self, name, sources=[],
+            depends=[so_path],
+            libraries=['elbrus'],
+            runtime_library_dirs=[so_dir],
+            library_dirs=[so_dir])
         self.sourcedir = os.path.abspath(sourcedir)
 
 
@@ -36,7 +44,7 @@ class CMakeBuild(build_ext):
         cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
                       '-DPYTHON_EXECUTABLE=' + sys.executable]
 
-        cfg = 'Debug' if self.debug else 'Release'
+        cfg = 'Release'
         build_args = ['--config', cfg]
 
         if platform.system() == "Windows":
@@ -59,10 +67,12 @@ class CMakeBuild(build_ext):
 setup(
     name='elbrus_visual_slam',
     version='1.0.0',
-    author='Alex Korovko',
+    author='Alexander Korovko',
     author_email='1a2w3d4r@mail.ru',
     description='NVIDIA Elbrus Visual SLAM library',
-    long_description='',
+    packages=['elbrus'],
+    package_dir={'elbrus': 'elbrus/lib_x86_64/'},
+    package_data={'elbrus': ['libelbrus.so']},
     ext_modules=[CMakeExtension('elbrus_visual_slam')],
     cmdclass=dict(build_ext=CMakeBuild),
     zip_safe=False
